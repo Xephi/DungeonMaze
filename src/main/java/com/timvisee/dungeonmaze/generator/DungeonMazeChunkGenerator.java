@@ -39,6 +39,7 @@ public class DungeonMazeChunkGenerator extends ChunkGenerator {
     public List<BlockPopulator> getDefaultPopulators(World world) {
         //noinspection unchecked
         return (List<BlockPopulator>) (List<?>) Arrays.asList(
+                new MineshaftNetworkPopulator(),
                 new BrokenWallsPopulator(),
                 new SpawnChamberPopulator(),
                 new OresInGroundPopulator(),

@@ -49,6 +49,9 @@ public abstract class MazeRoomBlockPopulator extends MazeLayerBlockPopulator {
                     // Increase the iterations counter
                     iterationCount++;
 
+                    if(dungeonChunk.isRoomReservedByChunkCoordinates(chunkX, y, chunkZ))
+                        continue;
+
                     // Make sure this room isn't constant
                     if(DungeonMaze.instance.isConstantRoom(world.getName(), chunk, chunkX, y, chunkZ))
                         continue;

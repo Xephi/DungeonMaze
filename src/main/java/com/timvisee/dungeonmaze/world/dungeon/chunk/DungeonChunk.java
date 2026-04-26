@@ -1,6 +1,10 @@
 package com.timvisee.dungeonmaze.world.dungeon.chunk;
 
+import com.timvisee.dungeonmaze.generator.DungeonMazeLayout;
 import com.timvisee.dungeonmaze.generator.chunk.BukkitChunk;
+import com.timvisee.dungeonmaze.world.dungeon.chunk.grid.room.DungeonChunkRoom;
+import com.timvisee.dungeonmaze.world.dungeon.chunk.grid.room.DungeonChunkRoomGrid;
+import com.timvisee.dungeonmaze.world.dungeon.chunk.grid.room.DungeonChunkRoomType;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.msgpack.core.MessageBufferPacker;
@@ -34,6 +38,10 @@ public class DungeonChunk {
      * Defines whether this chunk is a custom chunk.
      */
     private boolean customChunk = false;
+    /**
+     * The reserved room grid for this chunk.
+     */
+    private final DungeonChunkRoomGrid roomGrid;
 
     /**
      * Constructor.
@@ -46,6 +54,7 @@ public class DungeonChunk {
         this.region = region;
         this.x = x;
         this.y = y;
+        this.roomGrid = new DungeonChunkRoomGrid(this);
     }
 
     /**
@@ -175,6 +184,43 @@ public class DungeonChunk {
         return new BukkitChunk(this);
     }
 
+    public DungeonChunkRoomGrid getRoomGrid() {
+        return this.roomGrid;
+    }
+
+    public DungeonChunkRoom getRoom(int roomX, int layer, int roomZ) {
+        return this.roomGrid.getRoom(roomX, layer, roomZ);
+    }
+
+    public DungeonChunkRoom getRoomByChunkCoordinates(int roomChunkX, int roomY, int roomChunkZ) {
+        final int layer = DungeonMazeLayout.getDungeonLevel(roomY);
+        if(layer == 0)
+            return null;
+
+        final int roomX = Math.floorDiv(roomChunkX, DungeonMazeLayout.ROOM_SIZE);
+        final int roomZ = Math.floorDiv(roomChunkZ, DungeonMazeLayout.ROOM_SIZE);
+        return getRoom(roomX, layer, roomZ);
+    }
+
+    public boolean isRoomReserved(int roomX, int layer, int roomZ) {
+        final DungeonChunkRoom room = getRoom(roomX, layer, roomZ);
+        return room != null && room.isReserved();
+    }
+
+    public boolean isRoomReservedByChunkCoordinates(int roomChunkX, int roomY, int roomChunkZ) {
+        final DungeonChunkRoom room = getRoomByChunkCoordinates(roomChunkX, roomY, roomChunkZ);
+        return room != null && room.isReserved();
+    }
+
+    public DungeonChunkRoom reserveRoom(int roomX, int layer, int roomZ, DungeonChunkRoomType type, long structureId, int connectionMask) {
+        final DungeonChunkRoom room = getRoom(roomX, layer, roomZ);
+        if(room == null)
+            return null;
+
+        room.setReservation(type, structureId, connectionMask);
+        return room;
+    }
+
     /**
      * Check whether this chunk is a custom chunk.
      *
@@ -212,6 +258,9 @@ public class DungeonChunk {
         // Load whether this chunk is a custom chunk
         dungeonChunk.setCustomChunk(unpacker.unpackBoolean());
 
+        if(unpacker.hasNext())
+            dungeonChunk.getRoomGrid().load(unpacker);
+
         // Return the instance
         return dungeonChunk;
     }
@@ -228,5 +277,8 @@ public class DungeonChunk {
 
         // Define whether this chunk is custom
         packer.packBoolean(this.customChunk);
+
+        // Save the reserved room grid
+        this.roomGrid.save(packer);
     }
 }

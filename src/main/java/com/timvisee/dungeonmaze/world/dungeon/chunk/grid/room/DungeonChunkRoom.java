@@ -1,12 +1,14 @@
 package com.timvisee.dungeonmaze.world.dungeon.chunk.grid.room;
 
+import com.timvisee.dungeonmaze.generator.DungeonMazeLayout;
 import com.timvisee.dungeonmaze.world.dungeon.chunk.DungeonChunk;
 
 public class DungeonChunkRoom {
 
-    // TODO: Make this variable?
-    /** Defines the size (length and width) of a room. */
-    private static final int ROOM_SIZE = 8;
+    public static final int CONNECTION_NORTH = 1;
+    public static final int CONNECTION_EAST = 1 << 1;
+    public static final int CONNECTION_SOUTH = 1 << 2;
+    public static final int CONNECTION_WEST = 1 << 3;
 
     /** Defines the dungeon chunk the room is in. */
     private DungeonChunk chunk;
@@ -16,6 +18,12 @@ public class DungeonChunkRoom {
     private int z;
     /** Defines the layer position of the room in a chunk. */
     private int layer;
+    /** Defines the reserved room type. */
+    private DungeonChunkRoomType type = DungeonChunkRoomType.NONE;
+    /** Defines the structure instance this room belongs to. */
+    private long structureId = 0L;
+    /** Defines the connection mask for the structure. */
+    private int connectionMask = 0;
 
     /**
      * Constructor.
@@ -123,7 +131,7 @@ public class DungeonChunkRoom {
         final int xChunk = this.chunk.getWorldX();
 
         // Calculate and return the X coordinate of the room in the world space
-        return (this.x * ROOM_SIZE) + xChunk;
+        return (this.x * DungeonMazeLayout.ROOM_SIZE) + xChunk;
     }
 
     // TODO: Get a 'GetWorldY()' method!
@@ -143,7 +151,49 @@ public class DungeonChunkRoom {
         final int zChunk = this.chunk.getWorldZ();
 
         // Calculate and return the Z coordinate of the room in the world space
-        return (this.z * ROOM_SIZE) + zChunk;
+        return (this.z * DungeonMazeLayout.ROOM_SIZE) + zChunk;
+    }
+
+    public int getChunkBlockX() {
+        return this.x * DungeonMazeLayout.ROOM_SIZE;
+    }
+
+    public int getChunkBlockZ() {
+        return this.z * DungeonMazeLayout.ROOM_SIZE;
+    }
+
+    public DungeonChunkRoomType getType() {
+        return this.type;
+    }
+
+    public long getStructureId() {
+        return this.structureId;
+    }
+
+    public int getConnectionMask() {
+        return this.connectionMask;
+    }
+
+    public boolean isReserved() {
+        return this.type != DungeonChunkRoomType.NONE;
+    }
+
+    public boolean isMineshaftRoom() {
+        return this.type.isMineshaftRoom();
+    }
+
+    public void setReservation(DungeonChunkRoomType type, long structureId, int connectionMask) {
+        this.type = type == null ? DungeonChunkRoomType.NONE : type;
+        this.structureId = structureId;
+        this.connectionMask = connectionMask;
+    }
+
+    public void clearReservation() {
+        setReservation(DungeonChunkRoomType.NONE, 0L, 0);
+    }
+
+    public boolean hasConnection(int connection) {
+        return (this.connectionMask & connection) == connection;
     }
 
     /**

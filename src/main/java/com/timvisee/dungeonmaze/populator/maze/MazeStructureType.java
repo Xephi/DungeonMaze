@@ -13,6 +13,7 @@ public enum MazeStructureType {
 	HIGH_ROOM("High_Room", 8),
 	LIBRARY_ROOM("Library_Room", 9),
 	MASSIVE_ROOM("Massive_Room", 10),
+	MINESHAFT_ROOM("Mineshaft_Room", 21),
 	OASIS_CHUNK("Oasis_Chunk", 11),
 	RAIL("Rail", 12),
 	RUIN("Ruin", 13),

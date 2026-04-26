@@ -3,6 +3,7 @@ package com.timvisee.dungeonmaze.generator;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,8 +11,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.timvisee.dungeonmaze.generator.chunk.ShortChunk;
+import com.timvisee.dungeonmaze.populator.maze.structure.MineshaftNetworkPopulator;
 import com.timvisee.dungeonmaze.populator.maze.MazeRoomBlockPopulatorArgs;
 import com.timvisee.dungeonmaze.populator.maze.decoration.BrokenWallsPopulator;
+import org.bukkit.generator.BlockPopulator;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -104,6 +107,18 @@ class DungeonMazeLayoutTest {
         assertEquals(Material.STONE_BRICKS, grid.getType(roomX + 11, floorY + 1, roomZ), "The populator must not carve on the transposed X axis");
     }
 
+    @Test
+    void mineshaftPopulatorRunsBeforeBrokenWalls() {
+        final List<BlockPopulator> populators = new DungeonMazeChunkGenerator().getDefaultPopulators(createTestWorld());
+
+        final int mineshaftIndex = indexOf(populators, MineshaftNetworkPopulator.class);
+        final int brokenWallsIndex = indexOf(populators, BrokenWallsPopulator.class);
+
+        assertTrue(mineshaftIndex >= 0, "The mineshaft populator must be registered");
+        assertTrue(brokenWallsIndex >= 0, "Broken walls must still be registered");
+        assertTrue(mineshaftIndex < brokenWallsIndex, "Mineshaft reservations must happen before room wall decorators run");
+    }
+
     private static void assertDividerUsesLegacyRoomGeometry(int roomStart, int divider) {
         final int roomEnd = roomStart + DungeonMazeLayout.ROOM_SIZE - 1;
         assertTrue(
@@ -138,6 +153,14 @@ class DungeonMazeLayoutTest {
                 }
             }
         }
+    }
+
+    private static int indexOf(List<BlockPopulator> populators, Class<?> type) {
+        for(int i = 0; i < populators.size(); i++)
+            if(type.isInstance(populators.get(i)))
+                return i;
+
+        return -1;
     }
 
     private static World createTestWorld() {
